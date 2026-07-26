@@ -50,9 +50,56 @@ class Dictionary:
         index = self._calculate_index(key)
 
         if self.hash_table[index] is None:
-            raise KeyError(key)
+            raise KeyError(f"Key '{key}' not found in the dictionary")
 
         return self.hash_table[index][2]
 
     def __len__(self) -> int:
         return self.size
+
+    def clear(self) -> None:
+        self.capacity = self.INITIAL_CAPACITY
+        self.size = 0
+        self.hash_table = [None] * self.capacity
+
+    def get(self, key: Hashable, default: Any = None) -> Any:
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def __iter__(self) -> Any:
+        for node in self.hash_table:
+            if node is not None:
+                yield node[0]
+
+    def update(self, other: "Dictionary") -> None:
+        for key in other:
+            self[key] = other[key]
+
+    def __delitem__(self, key: Hashable) -> None:
+        index = self._calculate_index(key)
+
+        if self.hash_table[index] is None:
+            raise KeyError(f"Key '{key}' not found in the dictionary")
+
+        self.hash_table[index] = None
+        self.size -= 1
+        index = (index + 1) % self.capacity
+
+        while self.hash_table[index] is not None:
+            node = self.hash_table[index]
+            self.hash_table[index] = None
+            self.size -= 1
+            self[node[0]] = node[2]
+            index = (index + 1) % self.capacity
+
+    def pop(self, key: Hashable, *args: Any) -> Any:
+        try:
+            value = self[key]
+            del self[key]
+            return value
+        except KeyError:
+            if args:
+                return args[0]
+            raise
